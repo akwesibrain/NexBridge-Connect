@@ -1,0 +1,7 @@
+node_modules
+dist
+.DS_Store
+*.local
+
+# design-process screenshots (keep DIRECTION.md / CRITIQUE.md, skip the heavy PNGs)
+.design/shots/

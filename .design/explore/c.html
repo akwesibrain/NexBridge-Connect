@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Nexbridge — Daybreak delta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&family=Hanken+Grotesk:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#fdfbf8; --ink:#241f26; --ink-2:#6d6570; --line:#ece6e0;
+    --coral:#ef6a43; --coral-ink:#c94a28; --peach:#ffd9c2; --apricot:#ffe9d0;
+    --violet:#7b6cc9; --green:#3f9469; --sky:#eaf0f6;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:var(--bg);color:var(--ink);font-family:"Hanken Grotesk",sans-serif;-webkit-font-smoothing:antialiased;font-size:14px}
+  .app{display:grid;grid-template-columns:230px 1fr;height:100vh}
+  aside{background:#fff;border-right:1px solid var(--line);display:flex;flex-direction:column;padding:20px 14px}
+  .brand{display:flex;align-items:center;gap:10px;padding:4px 8px 18px}
+  .mark{width:30px;height:30px;border-radius:10px;background:var(--coral);position:relative;flex:0 0 auto}
+  .mark:before,.mark:after{content:"";position:absolute;width:7px;height:7px;border-radius:50%;background:#ffd9c2;top:8px}
+  .mark:before{left:7px}.mark:after{right:7px}
+  .mark i{position:absolute;left:7px;right:7px;top:11px;height:7px;border-bottom:2.4px solid #fff;border-radius:0 0 9px 9px}
+  .brand b{font-family:"Baloo 2",sans-serif;font-weight:700;font-size:16px;letter-spacing:-.01em}
+  .brand b span{color:var(--coral-ink)}
+  nav{display:flex;flex-direction:column;gap:1px;margin-top:4px}
+  nav a{display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:9px;color:var(--ink-2);text-decoration:none;font-weight:500;font-size:13.5px}
+  nav a svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.7}
+  nav a.on{background:#fff2ec;color:var(--coral-ink)}
+  nav a.on svg{stroke:var(--coral)}
+  .navlabel{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#b6aeb8;padding:14px 10px 5px;font-weight:600}
+  .me{margin-top:auto;display:flex;align-items:center;gap:10px;padding:12px 8px 2px;border-top:1px solid var(--line)}
+  .ava{width:30px;height:30px;border-radius:50%;background:var(--coral);color:#fff;display:grid;place-items:center;font-weight:700;font-size:12px;font-family:"Baloo 2"}
+  main{overflow:auto}
+  .top{display:flex;align-items:center;justify-content:space-between;padding:16px 30px;border-bottom:1px solid var(--line)}
+  .top h3{margin:0;font-family:"Baloo 2";font-weight:600;font-size:18px}
+  .tr{display:flex;align-items:center;gap:14px}
+  .credits{font-size:13px;color:var(--ink-2)}
+  .credits b{font-family:"Spline Sans Mono";color:var(--ink);font-weight:500}
+  .btn{background:var(--coral);color:#fff;border:0;border-radius:11px;padding:10px 16px;font-weight:700;font-size:13.5px;font-family:"Baloo 2";cursor:pointer;display:inline-flex;gap:8px;align-items:center}
+  .btn svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2}
+  /* hero colour field */
+  .hero{margin:22px 30px 0;border-radius:20px;overflow:hidden;background:linear-gradient(105deg,var(--apricot),var(--peach) 60%,#ffe3ea);position:relative}
+  .hero .pad{padding:26px 28px;position:relative;z-index:2;max-width:52%}
+  .hero h1{font-family:"Baloo 2";font-weight:700;font-size:30px;line-height:1.12;letter-spacing:-.01em;margin:0 0 8px;color:#3a2318}
+  .hero p{margin:0 0 18px;color:#7a4d39;font-size:14.5px;max-width:34ch}
+  .hero .nums{display:flex;gap:24px}
+  .hero .num .v{font-family:"Spline Sans Mono";font-size:22px;letter-spacing:-.03em;color:#3a2318}
+  .hero .num .k{font-size:12px;color:#9a6a52;margin-top:2px}
+  .delta{position:absolute;right:0;top:0;bottom:0;width:60%;z-index:1}
+  .delta path{fill:none;stroke:#fff;stroke-opacity:.6;stroke-width:2}
+  .delta path.main{stroke:#e9825f;stroke-opacity:.5;stroke-width:3}
+  .node{fill:#fff}
+  .dot{fill:var(--coral-ink)}
+  @media(prefers-reduced-motion:reduce){.dot{display:none}}
+  /* work row under hero */
+  .cols{display:grid;grid-template-columns:1fr 340px;gap:24px;padding:22px 30px}
+  .recent h2,.side h2{font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:#aaa2ac;font-weight:600;margin:0 0 6px}
+  .row{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line)}
+  .rtext .to{font-weight:600;font-size:13.5px}
+  .rtext .bd{color:var(--ink-2);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:48ch}
+  .pill{font-size:12px;font-weight:600;padding:3px 10px;border-radius:20px}
+  .pill.ok{background:#e7f3ec;color:var(--green)} .pill.wait{background:#fdeede;color:#b9772a}
+  .t{color:#aaa2ac;font-size:12px;font-family:"Spline Sans Mono"}
+  .quick{display:flex;flex-direction:column;gap:9px}
+  .q{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:13px;background:#fff;cursor:pointer}
+  .q .ic{width:34px;height:34px;border-radius:9px;background:#fff2ec;color:var(--coral-ink);display:grid;place-items:center}
+  .q .ic svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.8}
+  .q b{font-size:13.5px;font-weight:600} .q small{display:block;color:var(--ink-2);font-size:12px}
+  @media(max-width:900px){.hero .pad{max-width:100%}.delta{opacity:.25}.cols{grid-template-columns:1fr}}
+  @media(max-width:820px){.app{grid-template-columns:1fr}aside{display:none}.hero{margin:16px}.cols{padding:16px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside>
+    <div class="brand"><span class="mark"><i></i></span><b>Nexbridge <span>Connect</span></b></div>
+    <nav>
+      <a class="on" href="#"><svg viewBox="0 0 24 24"><path d="M3 12l9-8 9 8M5 10v10h14V10"/></svg>Dashboard</a>
+      <a href="#"><svg viewBox="0 0 24 24"><path d="M4 5h16v12H7l-3 3z"/></svg>Compose</a>
+      <a href="#"><svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h12"/></svg>Campaigns</a>
+      <a href="#"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M4 20c0-3 2.5-5 5-5s5 2 5 5"/></svg>Contacts</a>
+      <div class="navlabel">Operate</div>
+      <a href="#"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M4 9h16"/></svg>Sender IDs</a>
+      <a href="#"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg>Wallet</a>
+      <a href="#"><svg viewBox="0 0 24 24"><path d="M8 9l-4 3 4 3M16 9l4 3-4 3"/></svg>Developers</a>
+    </nav>
+    <div class="me"><span class="ava">KM</span><div><div style="font-weight:600;font-size:13px">Kwame Mensah</div><div style="color:var(--ink-2);font-size:12px">Horizon Retail</div></div></div>
+  </aside>
+
+  <main>
+    <div class="top">
+      <h3>Good morning, Kwame</h3>
+      <div class="tr">
+        <span class="credits"><b>48,250</b> credits</span>
+        <button class="btn"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>Compose</button>
+      </div>
+    </div>
+
+    <section class="hero">
+      <svg class="delta" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice">
+        <g>
+          <path class="main" id="p0" d="M-10,150 C80,150 120,150 180,150"/>
+          <path id="p1" d="M180,150 C240,150 260,90 330,70"/>
+          <path id="p2" d="M180,150 C240,150 255,130 340,120"/>
+          <path id="p3" d="M180,150 C240,150 255,170 340,180"/>
+          <path id="p4" d="M180,150 C240,150 260,210 330,230"/>
+          <path id="p5" d="M330,70 C360,64 375,60 400,56"/>
+          <path id="p6" d="M330,230 C360,236 375,240 400,244"/>
+        </g>
+        <circle class="node" cx="180" cy="150" r="5"/>
+        <circle class="node" cx="330" cy="70" r="3.2"/><circle class="node" cx="340" cy="120" r="3.2"/>
+        <circle class="node" cx="340" cy="180" r="3.2"/><circle class="node" cx="330" cy="230" r="3.2"/>
+        <g>
+          <circle class="dot" r="3.2"><animateMotion dur="2.6s" repeatCount="indefinite" keyPoints="0;1" keyTimes="0;1" calcMode="linear"><mpath href="#p1"/></animateMotion></circle>
+          <circle class="dot" r="3.2"><animateMotion dur="2.9s" begin="0.5s" repeatCount="indefinite"><mpath href="#p2"/></animateMotion></circle>
+          <circle class="dot" r="3.2"><animateMotion dur="2.4s" begin="1s" repeatCount="indefinite"><mpath href="#p3"/></animateMotion></circle>
+          <circle class="dot" r="3.2"><animateMotion dur="3.1s" begin="0.2s" repeatCount="indefinite"><mpath href="#p4"/></animateMotion></circle>
+          <circle class="dot" r="2.6" fill="#fff"><animateMotion dur="2.6s" begin="1.4s" repeatCount="indefinite"><mpath href="#p1"/></animateMotion></circle>
+        </g>
+      </svg>
+      <div class="pad">
+        <h1>Good things are on their way to 1.28M people.</h1>
+        <p>One message leaves you and fans out across every network. 94.2% have already arrived.</p>
+        <div class="nums">
+          <div class="num"><div class="v">1.21M</div><div class="k">delivered</div></div>
+          <div class="num"><div class="v">40,000</div><div class="k">in transit</div></div>
+          <div class="num"><div class="v">48,250</div><div class="k">credits left</div></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="cols">
+      <div class="recent">
+        <h2>Recent messages</h2>
+        <div class="row"><div class="rtext"><div class="to">+233 24 118 2204 &middot; HRZ-OTP</div><div class="bd">Your OTP is 48213. Valid for 5 minutes. Do not share this code.</div></div><span class="pill ok">Delivered</span><span class="t">12:41</span></div>
+        <div class="row"><div class="rtext"><div class="to">+233 20 554 9031 &middot; HORIZON</div><div class="bd">Hi Ama, your order #HR-4471 has shipped and arrives in 2–3 days.</div></div><span class="pill ok">Delivered</span><span class="t">12:38</span></div>
+        <div class="row"><div class="rtext"><div class="to">+233 27 740 1180 &middot; HRZ-PROMO</div><div class="bd">FLASH SALE: 30% off all items this weekend. Shop now at horizon.gh</div></div><span class="pill wait">In transit</span><span class="t">12:35</span></div>
+        <div class="row"><div class="rtext"><div class="to">+233 55 902 7714 &middot; HORIZON</div><div class="bd">Payment of ₵480.00 was received. Receipt: HR-2231.</div></div><span class="pill ok">Delivered</span><span class="t">12:30</span></div>
+      </div>
+      <div class="side">
+        <h2>Pick up where you left off</h2>
+        <div class="quick">
+          <div class="q"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 5h16v12H7l-3 3z"/></svg></span><div><b>Finish “November Promo”</b><small>Draft &middot; 18,420 recipients</small></div></div>
+          <div class="q"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/></svg></span><div><b>Import contacts</b><small>CSV or Excel</small></div></div>
+          <div class="q"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/></svg></span><div><b>Top up credits</b><small>48,250 remaining</small></div></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

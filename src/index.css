@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: light; }
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  background: #fdfbf8;
+  color: #241f26;
+  font-family: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+* { box-sizing: border-box; }
+::selection { background: #ffd8c4; }
+
+h1, h2, h3, .font-display { font-family: "Baloo 2", "Hanken Grotesk", sans-serif; }
+
+/* Thin, warm scrollbars for dashboard surfaces */
+.nb-scroll::-webkit-scrollbar { width: 9px; height: 9px; }
+.nb-scroll::-webkit-scrollbar-thumb { background: #e0d6ca; border-radius: 9px; }
+.nb-scroll::-webkit-scrollbar-track { background: transparent; }
+
+@layer components {
+  .nb-input {
+    @apply w-full rounded-[11px] border border-[#e0d8cf] bg-white px-3 py-2 text-sm text-navy-900
+           placeholder:text-navy-400 shadow-sm transition
+           focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25;
+  }
+  .nb-label { @apply mb-1.5 block text-sm font-medium text-navy-800; }
+  .nb-card { @apply rounded-2xl border border-[#efe7dd] bg-white shadow-card; }
+}
+
+/* Loading: warm skeleton shimmer */
+@keyframes nb-shimmer { 100% { transform: translateX(100%); } }
+.nb-skel {
+  position: relative; overflow: hidden; background: #ece3d7; border-radius: 8px;
+}
+.nb-skel::after {
+  content: ""; position: absolute; inset: 0; transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.7), transparent);
+  animation: nb-shimmer 1.5s infinite;
+}
+/* Route progress bar */
+@keyframes nb-indeterminate { 0% { left: -40%; } 100% { left: 100%; } }
+@media (prefers-reduced-motion: reduce) {
+  .nb-skel::after { animation: none; display: none; }
+  .nb-bar-fill { transition: none !important; }
+  .nb-bar-indet { animation: none !important; }
+}
+
+/* Live status ping (reduced-motion safe) */
+@keyframes nb-ping { 75%, 100% { transform: scale(2.2); opacity: 0; } }
+.nb-ping { animation: nb-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite; }
+@media (prefers-reduced-motion: reduce) { .nb-ping { animation: none; } }
+
+/* Boot splash reused on client-side entry to landing/login.
+   Keyframes (bootPulse/bootFlow/bootNode/bootBar) are defined globally in index.html. */
+.nb-splash {
+  position: fixed; inset: 0; z-index: 9998;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px;
+  background: #fdfbf8; transition: opacity .45s ease;
+  font-family: "Baloo 2", ui-sans-serif, system-ui, sans-serif;
+}
+.nb-splash.is-hiding { opacity: 0; pointer-events: none; }
+.nb-splash .m { animation: bootPulse 2.4s ease-in-out infinite; }
+.nb-splash .arc { stroke-dasharray: 5 7; animation: bootFlow 1.3s linear infinite; }
+.nb-splash .arc2 { animation-delay: .35s; }
+.nb-splash .src { animation: bootNode 2.4s ease-in-out infinite; transform-origin: 15px 24px; }
+.nb-splash .word { font-size: 20px; font-weight: 700; letter-spacing: -.01em; color: #241f26; }
+.nb-splash .word b { color: #b8431f; }
+.nb-splash .bar { position: relative; width: 168px; height: 3px; border-radius: 3px; overflow: hidden; background: #efe3d7; }
+.nb-splash .bar i { position: absolute; top: 0; height: 100%; width: 42%; border-radius: 3px;
+  background: linear-gradient(90deg, #ffb59a, #ef6a43); animation: bootBar 1.25s cubic-bezier(.65,.1,.35,.9) infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .nb-splash .m, .nb-splash .arc, .nb-splash .src, .nb-splash .bar i { animation: none; }
+  .nb-splash .bar i { left: 0; width: 100%; }
+}
+
+/* Signature: daybreak delta flow */
+@keyframes nb-roll { from { transform: translateY(-88%); } to { transform: translateY(0); } }
+@keyframes nb-draw { to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .nb-pulse { display: none; }
+  .nb-roll b { animation: none !important; }
+  .nb-draw { stroke-dashoffset: 0 !important; animation: none !important; }
+}
