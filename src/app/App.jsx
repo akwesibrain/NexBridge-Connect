@@ -7,7 +7,7 @@ import { Login, Register } from "../pages/auth/Auth";
 import Dashboard from "../pages/app/Dashboard";
 import { MessagingOverview, QuickSms, BulkSms, Campaigns, Scheduled, Templates } from "../pages/app/Messaging";
 import { Contacts, Groups, ImportContacts, ExportContacts } from "../pages/app/Contacts";
-import { Senders, SenderRegister } from "../pages/app/Senders";
+import { Senders } from "../pages/app/Senders";
 import { Reports, MessageHistory, CampaignAnalytics } from "../pages/app/Analytics";
 import { Wallet, BuyCredits, Transactions, Pricing } from "../pages/app/Finance";
 import { Developers, ApiKeys, ApiDocs, ApiLogs, Webhooks } from "../pages/app/Developers";
@@ -40,7 +40,6 @@ export default function App() {
         <Route path="import" element={<ImportContacts />} />
         <Route path="export" element={<ExportContacts />} />
         <Route path="senders" element={<Senders />} />
-        <Route path="senders/register" element={<SenderRegister />} />
         <Route path="reports" element={<Reports />} />
         <Route path="history" element={<MessageHistory />} />
         <Route path="campaign-analytics" element={<CampaignAnalytics />} />

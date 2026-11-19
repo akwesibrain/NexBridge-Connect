@@ -34,8 +34,8 @@ export default function Dashboard() {
       {/* Hero — dawn field + delta signature */}
       <section className="relative mb-6 overflow-hidden rounded-[22px] border border-[#f1dfd0]"
         style={{ background: "linear-gradient(104deg, #ffe4d0 0%, #ffd8c4 52%, #ffe0e6 100%)" }}>
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-[56%] sm:w-[62%]">
-          {/* labelled on larger screens; a clean label-free flow on phones */}
+        {/* labelled delta on larger screens; a clean label-free animated flow on phones */}
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-[52%] sm:w-[62%]">
           <DeltaFlow className="hidden h-full w-full sm:block" />
           <DeltaFlow className="h-full w-full sm:hidden" labels={false} />
         </div>
@@ -48,7 +48,7 @@ export default function Dashboard() {
           <p className="mt-3 max-w-[40ch] text-[15px] leading-relaxed text-[#6b4a37]">
             One message leaves you and fans out across every network. {fmtPct(94.2)} have already arrived; 40,000 are still flowing.
           </p>
-          <div className="mt-6 flex flex-wrap gap-2.5">
+          <div className="mt-10 flex flex-wrap gap-2.5 sm:mt-6">
             <Button as={Link} to="/app/quick-sms" icon={Send}>Compose message</Button>
             <Button as={Link} to="/app/reports" variant="outline" className="border-[#e4b79e] bg-white/70 text-[#8a4228] hover:bg-white">View delivery report</Button>
           </div>

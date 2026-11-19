@@ -27,7 +27,6 @@ export const CUSTOMER_NAV = [
   ]},
   { group: "Sender IDs", items: [
     { to: "/app/senders", label: "Sender IDs", icon: IdCard },
-    { to: "/app/senders/register", label: "Registration", icon: BadgeCheck },
   ]},
   { group: "Analytics", items: [
     { to: "/app/reports", label: "Delivery Reports", icon: BarChart3 },
