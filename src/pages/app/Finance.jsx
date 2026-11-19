@@ -91,7 +91,7 @@ export function BuyCredits() {
             {PACKAGES.map((p) => (
               <button key={p.name} onClick={() => setSelected(p.name)}
                 className={`relative rounded-2xl border bg-white p-5 text-left transition ${selected === p.name ? "border-brand-500 ring-1 ring-brand-500" : "border-[#efe7dd] hover:border-brand-300"}`}>
-                {p.popular && <span className="absolute -top-2.5 right-4 rounded-full bg-brand-600 px-2 py-0.5 text-[10px] font-semibold text-white">POPULAR</span>}
+                {p.popular && <span className="absolute -top-2.5 right-4 rounded-full bg-brand-600 px-2 py-0.5 text-[11px] font-semibold text-white">POPULAR</span>}
                 <div className="flex items-center justify-between">
                   <h3 className="text-base font-bold text-navy-900">{p.name}</h3>
                   <span className={`grid h-5 w-5 place-items-center rounded-full border ${selected === p.name ? "border-brand-600 bg-brand-600" : "border-[#e0d8cf]"}`}>{selected === p.name && <Check size={13} className="text-white" />}</span>
@@ -189,7 +189,7 @@ export function Pricing() {
           </Card>
         ))}
       </div>
-      <p className="mt-6 text-xs text-navy-500">Prices are illustrative for this demo environment. Enterprise and custom volumes are available on request.</p>
+      <p className="mt-6 text-xs text-navy-600">Prices are illustrative for this demo environment. Enterprise and custom volumes are available on request.</p>
     </>
   );
 }

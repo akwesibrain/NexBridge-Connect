@@ -34,8 +34,10 @@ export default function Dashboard() {
       {/* Hero — dawn field + delta signature */}
       <section className="relative mb-6 overflow-hidden rounded-[22px] border border-[#f1dfd0]"
         style={{ background: "linear-gradient(104deg, #ffe4d0 0%, #ffd8c4 52%, #ffe0e6 100%)" }}>
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-[62%]">
-          <DeltaFlow className="h-full w-full" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-[56%] sm:w-[62%]">
+          {/* labelled on larger screens; a clean label-free flow on phones */}
+          <DeltaFlow className="hidden h-full w-full sm:block" />
+          <DeltaFlow className="h-full w-full sm:hidden" labels={false} />
         </div>
         <div className="pointer-events-none absolute inset-0"
           style={{ background: "linear-gradient(100deg, rgba(255,250,245,.88) 0%, rgba(255,250,245,.5) 38%, rgba(255,250,245,0) 60%)" }} />

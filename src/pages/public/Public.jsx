@@ -373,7 +373,7 @@ export function PublicPricing() {
             </div>
           ))}
         </div>
-        <p className="mt-8 text-center text-xs text-navy-500">Prices are illustrative for this demo environment.</p>
+        <p className="mt-8 text-center text-xs text-navy-600">Prices are illustrative for this demo environment.</p>
       </section>
       <Footer />
     </div>

@@ -10,7 +10,7 @@ const BRANCHES = [
 
 export default function DeltaFlow({ className, labels = true }) {
   return (
-    <svg className={className} viewBox="0 0 360 300" fill="none" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+    <svg className={className} viewBox="0 0 404 300" fill="none" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
       <defs>
         {BRANCHES.map((b) => <path key={b.id} id={`df-${b.id}`} d={b.d} />)}
       </defs>

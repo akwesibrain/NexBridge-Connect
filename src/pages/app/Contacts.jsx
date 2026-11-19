@@ -95,7 +95,7 @@ export function Groups() {
           <Card key={g.id} className="p-5">
             <div className="flex items-start justify-between">
               <span className="grid h-11 w-11 place-items-center rounded-xl bg-brand-50 text-brand-600"><Users2 size={21} /></span>
-              <button onClick={() => { setGroups((x) => x.filter((y) => y.id !== g.id)); toast.success("Group deleted"); }} className="rounded-lg p-1.5 text-navy-500 hover:bg-red-50 hover:text-red-600"><Trash2 size={15} /></button>
+              <button aria-label={`Delete ${g.name}`} onClick={() => { setGroups((x) => x.filter((y) => y.id !== g.id)); toast.success("Group deleted"); }} className="rounded-lg p-1.5 text-navy-500 hover:bg-red-50 hover:text-red-600"><Trash2 size={15} /></button>
             </div>
             <h3 className="mt-4 text-base font-semibold text-navy-900">{g.name}</h3>
             <p className="mt-0.5 text-sm text-navy-600">{fmtInt(g.count)} contacts</p>
