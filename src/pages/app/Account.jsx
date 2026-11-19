@@ -7,7 +7,7 @@ import PageHeader from "../../components/ui/PageHeader";
 import { Card, CardHeader, CardBody } from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import Badge from "../../components/ui/Badge";
-import { Field, Input, Select, Toggle } from "../../components/ui/Field";
+import { Field, Input, PasswordInput, Select, Toggle } from "../../components/ui/Field";
 import Modal from "../../components/ui/Modal";
 import DataTable from "../../components/ui/DataTable";
 import { useToast } from "../../components/ui/Toast.jsx";
@@ -181,9 +181,9 @@ export function Security() {
         <Card>
           <CardHeader title="Change password" />
           <CardBody className="space-y-4">
-            <Field label="Current password"><Input type="password" /></Field>
-            <Field label="New password" hint="At least 8 characters with a number and symbol."><Input type="password" /></Field>
-            <Field label="Confirm new password"><Input type="password" /></Field>
+            <Field label="Current password"><PasswordInput /></Field>
+            <Field label="New password" hint="At least 8 characters with a number and symbol."><PasswordInput /></Field>
+            <Field label="Confirm new password"><PasswordInput /></Field>
             <Button icon={KeyRound} onClick={() => toast.success("Password updated (demo)")}>Update password</Button>
           </CardBody>
         </Card>

@@ -5,7 +5,7 @@ import { useAuth } from "../lib/auth.jsx";
 
 export default function AdminLayout() {
   const { user } = useAuth();
-  if (!user) return <Navigate to="/login?admin=1" replace />;
+  if (!user) return <Navigate to="/login" replace />;
   if (user.role !== "admin") return <Navigate to="/app" replace />;
   return (
     <DashboardShell nav={ADMIN_NAV} variant="admin">

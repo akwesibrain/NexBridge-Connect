@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, ShieldCheck, Check } from "lucide-react";
 import { Logo } from "../../brand/Logo";
 import BootSplash, { useEntrySplash } from "../../components/BootSplash";
 import Button from "../../components/ui/Button";
-import { Field, Input } from "../../components/ui/Field";
+import { Field, Input, PasswordInput } from "../../components/ui/Field";
 import { useAuth } from "../../lib/auth.jsx";
 import { useToast } from "../../components/ui/Toast.jsx";
 
@@ -42,18 +42,20 @@ function AuthFrame({ title, subtitle, children, footer }) {
   );
 }
 
+// A Nexbridge staff email signs in to the admin console; anything else is a
+// customer. One login page decides the destination from the credentials.
+const roleForEmail = (email) => (email.trim().toLowerCase().endsWith("@nexbridge.tech") ? "admin" : "customer");
+
 export function Login() {
   const { login } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
-  const [params] = useSearchParams();
-  const adminHint = params.get("admin") === "1";
-  const [role, setRole] = useState(adminHint ? "admin" : "customer");
-  const [email, setEmail] = useState(adminHint ? "admin@nexbridge.tech" : "kwame.mensah@horizonretail.gh");
+  const [email, setEmail] = useState("kwame.mensah@horizonretail.gh");
   const [password, setPassword] = useState("demo1234");
 
   const submit = (e) => {
     e.preventDefault();
+    const role = roleForEmail(email);
     login({ email, role });
     toast.success("Signed in to the demo workspace");
     navigate(role === "admin" ? "/admin" : "/app");
@@ -62,18 +64,10 @@ export function Login() {
   return (
     <AuthFrame title="Welcome back" subtitle="Sign in to your Nexbridge Connect workspace."
       footer={<>New to Nexbridge? <Link to="/register" className="font-semibold text-brand-700">Create an account</Link></>}>
-      <div className="mb-5 grid grid-cols-2 gap-2 rounded-lg bg-surface-sunken p-1">
-        {[["customer", "Customer"], ["admin", "Administrator"]].map(([v, l]) => (
-          <button key={v} onClick={() => { setRole(v); setEmail(v === "admin" ? "admin@nexbridge.tech" : "kwame.mensah@horizonretail.gh"); }}
-            className={`rounded-md py-2 text-sm font-semibold transition ${role === v ? "bg-white text-navy-900 shadow-sm" : "text-navy-600"}`}>
-            {l}
-          </button>
-        ))}
-      </div>
       <form onSubmit={submit} className="space-y-4">
         <Field label="Email address"><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></Field>
         <Field label="Password">
-          <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} required />
         </Field>
         <div className="flex items-center justify-between text-sm">
           <label className="flex items-center gap-2 text-navy-700"><input type="checkbox" defaultChecked className="rounded border-[#e0d8cf]" /> Remember me</label>
@@ -83,7 +77,7 @@ export function Login() {
       </form>
       <div className="mt-5 flex items-start gap-2 rounded-lg bg-brand-50 p-3 text-xs text-brand-700">
         <ShieldCheck size={15} className="mt-0.5 shrink-0" />
-        <span>Demo mode. No real authentication. Any email and password signs you in.</span>
+        <span>Demo mode. No real authentication. Any email and password signs you in; use an <strong>@nexbridge.tech</strong> email to open the admin console.</span>
       </div>
     </AuthFrame>
   );
@@ -113,7 +107,7 @@ export function Register() {
           <Field label="Phone" required><Input value={form.phone} onChange={set("phone")} placeholder="+233 20 123 4567" required /></Field>
         </div>
         <Field label="Work email" required><Input type="email" value={form.email} onChange={set("email")} placeholder="you@company.gh" required /></Field>
-        <Field label="Password" required hint="At least 8 characters."><Input type="password" value={form.password} onChange={set("password")} required /></Field>
+        <Field label="Password" required hint="At least 8 characters."><PasswordInput value={form.password} onChange={set("password")} required /></Field>
         <label className="flex items-start gap-2 text-xs text-navy-600">
           <input type="checkbox" required className="mt-0.5 rounded border-[#e0d8cf]" />
           I agree to the Nexbridge Connect Terms of Service and Acceptable Use Policy.

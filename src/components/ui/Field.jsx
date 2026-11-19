@@ -1,4 +1,21 @@
+import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { cn } from "../../lib/cn";
+
+export function PasswordInput({ className, ...p }) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="relative">
+      <input type={show ? "text" : "password"} className={cn("nb-input pr-10", className)} {...p} />
+      <button type="button" onClick={() => setShow((s) => !s)}
+        aria-label={show ? "Hide password" : "Show password"} aria-pressed={show} tabIndex={-1}
+        className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-navy-500 transition hover:bg-surface-muted hover:text-navy-700">
+        {show ? <EyeOff size={16} /> : <Eye size={16} />}
+      </button>
+    </div>
+  );
+}
+
 export function Field({ label, hint, error, required, children, className }) {
   return (
     <div className={className}>
