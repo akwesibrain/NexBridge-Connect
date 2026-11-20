@@ -4,6 +4,7 @@ import {
   Menu, X, Search, Bell, ChevronDown, LogOut, PanelLeftClose, PanelLeft, Wallet, LifeBuoy, User, CheckCheck,
 } from "lucide-react";
 import { Logo, BrandMark } from "../brand/Logo";
+import AssistantWidget from "../components/AssistantWidget";
 import { cn } from "../lib/cn";
 import { useAuth } from "../lib/auth.jsx";
 import { fmtInt, relTime } from "../lib/format";
@@ -177,6 +178,8 @@ export default function DashboardShell({ nav, variant = "customer", children }) 
           <div className="mx-auto max-w-[1400px] px-4 py-6 lg:px-8">{children}</div>
         </main>
       </div>
+
+      <AssistantWidget variant={variant} />
     </div>
   );
 }
