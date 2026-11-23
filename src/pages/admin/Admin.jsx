@@ -19,7 +19,7 @@ import DataTable from "../../components/ui/DataTable";
 import { Field, Input, Select, Toggle } from "../../components/ui/Field";
 import { useToast } from "../../components/ui/Toast.jsx";
 import { Bars, AreaTrend } from "../../components/charts/Charts";
-import { fmtInt, fmtGhs, fmtDate, fmtDateTime, relTime, fmtPct } from "../../lib/format";
+import { fmtInt, fmtGhs, fmtRate, fmtDate, fmtDateTime, relTime, fmtPct } from "../../lib/format";
 import {
   ADMIN_STATS, ADMIN_CUSTOMERS, ADMIN_REVENUE, AUDIT_LOGS, ADMIN_USERS, SENDER_IDS,
   CAMPAIGNS, TRANSACTIONS, PACKAGES, API_LOGS, COLORS,
@@ -53,6 +53,8 @@ const KPIS = [
   { label: "Fail rate", value: fmtPct(ADMIN_STATS.failRate), trend: -0.6 },
 ];
 
+const DEGRADED = SYSTEMS.filter(([, st]) => st !== "ok").length;
+
 export function AdminOverview() {
   const topCustomers = [...ADMIN_CUSTOMERS].sort((a, b) => b.sent30 - a.sent30).slice(0, 5);
   return (
@@ -64,9 +66,10 @@ export function AdminOverview() {
           <p className="mt-1 text-sm text-navy-600">Platform-wide health and activity for Nexbridge Connect.</p>
         </div>
         <div className="flex items-center gap-3">
-          <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
-            <span className="relative flex h-2 w-2"><span className="nb-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500" /><span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" /></span>
-            All systems operational
+          <span className={cn("inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ring-1",
+            DEGRADED ? "bg-amber-50 text-amber-700 ring-amber-200" : "bg-emerald-50 text-emerald-700 ring-emerald-200")}>
+            <span className="relative flex h-2 w-2"><span className={cn("nb-ping absolute inline-flex h-full w-full rounded-full", DEGRADED ? "bg-amber-500" : "bg-emerald-500")} /><span className={cn("relative inline-flex h-2 w-2 rounded-full", DEGRADED ? "bg-amber-500" : "bg-emerald-500")} /></span>
+            {DEGRADED ? `${DEGRADED} system${DEGRADED === 1 ? "" : "s"} degraded` : "All systems operational"}
           </span>
           <span className="font-mono text-xs text-navy-600">Updated just now</span>
         </div>
@@ -93,7 +96,7 @@ export function AdminOverview() {
           </div>
         </Card>
         <Card>
-          <CardHeader title="System status" action={<Badge tone="green">Operational</Badge>} />
+          <CardHeader title="System status" action={DEGRADED ? <Badge tone="amber">Degraded</Badge> : <Badge tone="green">Operational</Badge>} />
           <div className="divide-y divide-[#f6f1ea]">
             {SYSTEMS.map(([name, st]) => (
               <div key={name} className="flex items-center justify-between px-5 py-[13px]">
@@ -191,24 +194,51 @@ export function AdminCustomers() {
   );
 }
 
+// Keyed by id so moving between customers starts from fresh state.
 export function AdminCustomerDetails() {
   const { id } = useParams();
+  return <CustomerDetails key={id} id={id} />;
+}
+
+function CustomerDetails({ id }) {
   const toast = useToast();
-  const c = ADMIN_CUSTOMERS.find((x) => x.id === id) || ADMIN_CUSTOMERS[0];
+  const found = ADMIN_CUSTOMERS.find((x) => x.id === id);
+  const [c, setC] = useState(found);
   const [credit, setCredit] = useState(false);
-  const [amount, setAmount] = useState("");
+  const [suspendOpen, setSuspendOpen] = useState(false);
+  const [adj, setAdj] = useState({ type: "add", amount: "", reason: "" });
+  if (!c) {
+    return (
+      <>
+        <PageHeader title="Customer not found" subtitle={`No customer with ID "${id}".`}
+          actions={<Button as={Link} to="/admin/customers" variant="outline" icon={ArrowLeft}>Back to customers</Button>} />
+      </>
+    );
+  }
+  const applyCredits = () => {
+    const n = Math.floor(Number(adj.amount));
+    if (!Number.isFinite(n) || n <= 0) return toast.error("Enter a positive whole number of credits");
+    if (!adj.reason.trim()) return toast.error("Give a reason for the adjustment");
+    if (adj.type === "deduct" && n > c.credits) return toast.error(`Cannot deduct more than the balance (${fmtInt(c.credits)})`);
+    setC((x) => ({ ...x, credits: x.credits + (adj.type === "add" ? n : -n) }));
+    setCredit(false); setAdj({ type: "add", amount: "", reason: "" });
+    toast.success(`${adj.type === "add" ? "Added" : "Deducted"} ${fmtInt(n)} credits (demo)`);
+  };
+  const suspended = c.status === "suspended";
   return (
     <>
       <PageHeader title={c.org} subtitle={`Customer ${c.id} · ${c.email}`}
         actions={<><Button as={Link} to="/admin/customers" variant="outline" icon={ArrowLeft}>Back</Button>
           <Button variant="outline" icon={Wallet} onClick={() => setCredit(true)}>Adjust credits</Button>
-          <Button variant="danger" icon={Ban} onClick={() => toast.success("Customer suspended (demo)")}>Suspend</Button></>} />
+          {suspended
+            ? <Button variant="outline" icon={Check} onClick={() => { setC((x) => ({ ...x, status: "active" })); toast.success("Customer reactivated (demo)"); }}>Reactivate</Button>
+            : <Button variant="danger" icon={Ban} onClick={() => setSuspendOpen(true)}>Suspend</Button>}</>} />
       {DEMO}
       <div className="grid gap-4 sm:grid-cols-4">
         <StatCard label="Plan" value={c.plan} icon={BadgeCheck} tone="brand" />
         <StatCard label="Credits" value={fmtInt(c.credits)} icon={Wallet} tone="navy" />
         <StatCard label="Sent (30d)" value={fmtInt(c.sent30)} icon={Activity} tone="green" />
-        <StatCard label="Status" value={c.status} icon={CheckCircle2} tone={c.status === "active" ? "green" : "amber"} />
+        <StatCard label="Status" value={<span className="capitalize">{c.status}</span>} icon={suspended ? Ban : CheckCircle2} tone={c.status === "active" ? "green" : suspended ? "red" : "amber"} />
       </div>
       <div className="mt-5 grid gap-5 lg:grid-cols-3">
         <Card className="lg:col-span-2">
@@ -225,13 +255,16 @@ export function AdminCustomerDetails() {
         </Card>
       </div>
       <Modal open={credit} onClose={() => setCredit(false)} title="Adjust credits" subtitle={c.org}
-        footer={<><Button variant="outline" onClick={() => setCredit(false)}>Cancel</Button><Button icon={Save} onClick={() => { setCredit(false); toast.success("Credits adjusted (demo)"); }}>Apply</Button></>}>
+        footer={<><Button variant="outline" onClick={() => setCredit(false)}>Cancel</Button><Button icon={Save} onClick={applyCredits}>Apply</Button></>}>
         <div className="space-y-4">
-          <Field label="Adjustment type"><Select><option>Add credits</option><option>Deduct credits</option></Select></Field>
-          <Field label="Amount"><Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="10000" /></Field>
-          <Field label="Reason"><Input placeholder="Goodwill / correction" /></Field>
+          <Field label="Adjustment type"><Select value={adj.type} onChange={(e) => setAdj((a) => ({ ...a, type: e.target.value }))}><option value="add">Add credits</option><option value="deduct">Deduct credits</option></Select></Field>
+          <Field label="Amount" required hint={`Current balance: ${fmtInt(c.credits)}`}><Input type="number" min="1" step="1" value={adj.amount} onChange={(e) => setAdj((a) => ({ ...a, amount: e.target.value }))} placeholder="10000" /></Field>
+          <Field label="Reason" required><Input value={adj.reason} onChange={(e) => setAdj((a) => ({ ...a, reason: e.target.value }))} placeholder="Goodwill / correction" /></Field>
         </div>
       </Modal>
+      <Confirm open={suspendOpen} onClose={() => setSuspendOpen(false)} danger title="Suspend customer" confirmLabel="Suspend"
+        message={`Suspend ${c.org}? They will be unable to send messages until reactivated.`}
+        onConfirm={() => { setC((x) => ({ ...x, status: "suspended" })); toast.success("Customer suspended (demo)"); }} />
     </>
   );
 }
@@ -239,11 +272,17 @@ export function AdminCustomerDetails() {
 export function AdminPricing() {
   const toast = useToast();
   const [pkgs, setPkgs] = useState(PACKAGES);
-  const update = (i, field, v) => setPkgs((p) => p.map((x, idx) => idx === i ? { ...x, [field]: Number(v) } : x));
+  // Keep the raw input so the field can be cleared while typing; validate on save.
+  const update = (i, field, v) => setPkgs((p) => p.map((x, idx) => idx === i ? { ...x, [field]: v === "" ? "" : Math.max(0, Number(v)) } : x));
+  const save = () => {
+    const bad = pkgs.find((p) => !(Number(p.units) > 0) || !(Number(p.price) > 0));
+    if (bad) return toast.error(`${bad.name}: credits and price must both be greater than zero`);
+    toast.success("Pricing saved (demo)");
+  };
   return (
     <>
       <PageHeader title="SMS Pricing" subtitle="Manage credit packages and per-SMS rates."
-        actions={<Button icon={Save} onClick={() => toast.success("Pricing saved (demo)")}>Save pricing</Button>} />
+        actions={<Button icon={Save} onClick={save}>Save pricing</Button>} />
       {DEMO}
       <Card className="overflow-hidden">
         <div className="nb-scroll overflow-x-auto">
@@ -257,7 +296,7 @@ export function AdminPricing() {
                   <td className="px-4 py-3 font-semibold text-navy-900">{p.name}</td>
                   <td className="px-4 py-3"><Input className="w-28" type="number" value={p.units} onChange={(e) => update(i, "units", e.target.value)} /></td>
                   <td className="px-4 py-3"><Input className="w-28" type="number" value={p.price} onChange={(e) => update(i, "price", e.target.value)} /></td>
-                  <td className="px-4 py-3 text-navy-700">{fmtGhs(p.price / p.units)}</td>
+                  <td className="px-4 py-3 text-navy-700">{p.units > 0 && p.price > 0 ? fmtRate(p.price / p.units) : "—"}</td>
                   <td className="px-4 py-3"><Badge tone="green">Active</Badge></td>
                 </tr>
               ))}

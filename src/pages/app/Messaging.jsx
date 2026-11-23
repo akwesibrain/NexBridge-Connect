@@ -38,7 +38,7 @@ function Composer({ value, onChange, variables }) {
           <span className="text-navy-300">|</span>
           <span>{seg.segments} segment{seg.segments === 1 ? "" : "s"}</span>
           <span className="text-navy-300">|</span>
-          <span>{seg.perSegment - (seg.length % seg.perSegment || seg.perSegment)} left in segment</span>
+          <span>{seg.remaining} left in segment</span>
           {seg.unicode && <Badge tone="amber">Unicode (70/segment)</Badge>}
         </div>
       </div>
@@ -46,7 +46,7 @@ function Composer({ value, onChange, variables }) {
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-1 text-xs font-medium text-navy-600"><Variable size={13} /> Insert:</span>
           {["{name}", "{first_name}", "{amount}", "{code}", "{link}"].map((v) => (
-            <button key={v} onClick={() => insert(v)} className="rounded-md bg-surface-sunken px-2 py-1 text-xs font-medium text-navy-700 hover:bg-[#e7ddd1]">{v}</button>
+            <button key={v} type="button" onClick={() => insert(v)} className="rounded-md bg-surface-sunken px-2 py-1 text-xs font-medium text-navy-700 hover:bg-[#e7ddd1]">{v}</button>
           ))}
         </div>
       )}
@@ -79,13 +79,17 @@ export function QuickSms() {
   const [message, setMessage] = useState("");
   const [tplOpen, setTplOpen] = useState(false);
 
-  const count = recipients.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean).length;
+  const list = recipients.split(/[\n,;]+/).map((s) => s.trim()).filter(Boolean);
+  const count = list.length;
+  const invalid = list.filter((n) => !/^\+?\d{6,15}$/.test(n.replace(/[\s()-]/g, "")));
   const seg = smsSegments(message);
   const cost = count * seg.segments;
 
   const [sending, setSending] = useState(false);
   const send = () => {
     if (!count) return toast.error("Add at least one recipient");
+    if (invalid.length) return toast.error(`Invalid number${invalid.length === 1 ? "" : "s"}: ${invalid.slice(0, 3).join(", ")}`);
+    if (cost > ORG.credits) return toast.error("Not enough credits to send this message");
     if (!message.trim()) return toast.error("Message cannot be empty");
     setSending(true);
     setTimeout(() => {
@@ -108,7 +112,8 @@ export function QuickSms() {
                   {approvedSenders.map((s) => <option key={s.id}>{s.name}</option>)}
                 </Select>
               </Field>
-              <Field label="Recipients" hint="Separate multiple numbers with commas or new lines.">
+              <Field label="Recipients" hint="Separate multiple numbers with commas or semicolons."
+                error={invalid.length ? `${invalid.length} invalid number${invalid.length === 1 ? "" : "s"}: ${invalid.slice(0, 3).join(", ")}` : undefined}>
                 <div className="flex gap-2">
                   <Select value={dial} onChange={(e) => setDial(e.target.value)} className="w-40 shrink-0">
                     {COUNTRIES.map((c) => <option key={c.code} value={c.dial}>{c.name} ({c.dial})</option>)}
@@ -171,15 +176,19 @@ export function BulkSms() {
   const seg = smsSegments(message);
   const cost = audience * seg.segments;
   const toggle = (id) => setGroups((g) => g.includes(id) ? g.filter((x) => x !== id) : [...g, id]);
-  const canNext = [groups.length > 0, !!sender, message.trim().length > 0 && name.trim().length > 0, true][step];
+  const whenValid = !schedule || (!!when && new Date(when).getTime() > Date.now());
+  const canNext = [groups.length > 0, !!sender, message.trim().length > 0 && name.trim().length > 0 && whenValid, true][step];
+  const insufficient = cost > ORG.credits;
 
   const [launching, setLaunching] = useState(false);
   const launch = () => {
+    if (insufficient) return toast.error("Not enough credits for this campaign. Top up or reduce the audience.");
+    if (!whenValid) return toast.error("Choose a send time in the future");
     setLaunching(true);
     setTimeout(() => {
       setLaunching(false);
       toast.success(schedule ? "Campaign scheduled (demo)" : "Campaign launched (demo)");
-      setStep(0); setGroups([]); setName(""); setMessage(""); setSchedule(false);
+      setStep(0); setGroups([]); setName(""); setMessage(""); setSchedule(false); setWhen("");
     }, 1300);
   };
 
@@ -239,7 +248,7 @@ export function BulkSms() {
                   <Field label="Campaign name" required><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="November Promo 2026" /></Field>
                   <Field label="Message"><Composer value={message} onChange={setMessage} variables /></Field>
                   <label className="flex items-center gap-2 text-sm text-navy-800"><input type="checkbox" checked={schedule} onChange={(e) => setSchedule(e.target.checked)} className="rounded border-[#e0d8cf]" /> Schedule for later</label>
-                  {schedule && <Field label="Send at"><Input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} /></Field>}
+                  {schedule && <Field label="Send at" required error={when && !whenValid ? "Send time must be in the future" : undefined} hint="Pick a date and time in the future."><Input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} /></Field>}
                 </div>
               )}
               {step === 3 && (
@@ -250,14 +259,15 @@ export function BulkSms() {
                       <div key={k} className="bg-white px-4 py-3"><dt className="text-xs text-navy-600">{k}</dt><dd className="mt-0.5 font-medium text-navy-900">{v}</dd></div>
                     ))}
                   </dl>
-                  <div className="rounded-xl bg-surface-muted p-4"><p className="text-xs font-semibold uppercase tracking-wide text-navy-500">Message</p><p className="mt-1 text-sm text-navy-800">{message || "No message yet"}</p></div>
+                  <div className="rounded-xl bg-surface-muted p-4"><p className="text-xs font-semibold uppercase tracking-wide text-navy-500">Message</p><p className="mt-1 whitespace-pre-wrap text-sm text-navy-800">{message || "No message yet"}</p></div>
+                  {insufficient && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">This campaign needs {fmtInt(cost)} credits but you have {fmtInt(ORG.credits)}. <Link to="/app/buy-credits" className="font-semibold underline">Buy credits</Link> or select fewer groups.</div>}
                 </div>
               )}
               <div className="mt-6 flex items-center justify-between border-t border-[#f3ece3] pt-4">
                 <Button variant="ghost" icon={ChevronLeft} disabled={step === 0} onClick={() => setStep((s) => s - 1)}>Back</Button>
                 {step < 3
                   ? <Button icon={ChevronRight} disabled={!canNext} onClick={() => setStep((s) => s + 1)}>Continue</Button>
-                  : <div className="flex gap-2"><Button variant="outline" icon={Save} disabled={launching} onClick={() => toast.info("Saved as draft (demo)")}>Save draft</Button><Button icon={schedule ? CalendarClock : Send} loading={launching} onClick={launch}>{launching ? (schedule ? "Scheduling…" : "Launching…") : (schedule ? "Schedule" : "Launch campaign")}</Button></div>}
+                  : <div className="flex gap-2"><Button variant="outline" icon={Save} disabled={launching} onClick={() => toast.info("Saved as draft (demo)")}>Save draft</Button><Button icon={schedule ? CalendarClock : Send} loading={launching} disabled={insufficient} onClick={launch}>{launching ? (schedule ? "Scheduling…" : "Launching…") : (schedule ? "Schedule" : "Launch campaign")}</Button></div>}
               </div>
             </CardBody>
           </Card>
@@ -270,7 +280,9 @@ export function BulkSms() {
               {[["Groups selected", groups.length], ["Audience size", fmtInt(audience)], ["Segments / msg", seg.segments], ["Estimated credits", fmtInt(cost)]].map(([k, v]) => (
                 <div key={k} className="flex justify-between"><span className="text-navy-600">{k}</span><span className="font-semibold text-navy-900">{v}</span></div>
               ))}
-              <div className="mt-2 rounded-lg bg-brand-50 p-3 text-xs text-brand-700">Balance after send: {fmtInt(Math.max(0, ORG.credits - cost))} credits</div>
+              {insufficient
+                ? <div className="mt-2 rounded-lg bg-red-50 p-3 text-xs text-red-700">Short by {fmtInt(cost - ORG.credits)} credits</div>
+                : <div className="mt-2 rounded-lg bg-brand-50 p-3 text-xs text-brand-700">Balance after send: {fmtInt(ORG.credits - cost)} credits</div>}
             </CardBody>
           </Card>
         </div>
@@ -334,17 +346,17 @@ export function Campaigns() {
 // ── Scheduled ───────────────────────────────────────────────────
 export function Scheduled() {
   const toast = useToast();
-  const rows = SCHEDULED;
+  const [rows, setRows] = useState(SCHEDULED);
   const columns = [
     { key: "name", header: "Campaign", render: (r) => <span className="font-medium text-navy-900">{r.name}</span> },
     { key: "sender", header: "Sender" },
     { key: "recipients", header: "Recipients", align: "right", render: (r) => fmtInt(r.recipients) },
     { key: "scheduledAt", header: "Scheduled for", render: (r) => <span className="inline-flex items-center gap-1.5 text-navy-800"><CalendarClock size={14} className="text-amber-500" /> {fmtDateTime(r.scheduledAt)}</span> },
     { key: "status", header: "Status", render: () => <Badge status="scheduled" /> },
-    { key: "id", header: "", sortable: false, align: "right", render: () => (
+    { key: "id", header: "", sortable: false, align: "right", render: (r) => (
       <div className="flex justify-end gap-1">
         <Button size="sm" variant="ghost" aria-label="Edit schedule" icon={Pencil} onClick={() => toast.info("Edit schedule (demo)")} />
-        <Button size="sm" variant="ghost" aria-label="Cancel schedule" icon={Trash2} onClick={() => toast.success("Schedule cancelled (demo)")} />
+        <Button size="sm" variant="ghost" aria-label="Cancel schedule" icon={Trash2} onClick={() => { setRows((x) => x.filter((y) => y.id !== r.id)); toast.success("Schedule cancelled"); }} />
       </div>
     )},
   ];
@@ -371,7 +383,7 @@ export function Templates() {
   const openEdit = (t) => { setEdit(t); setForm(t); setOpen(true); };
   const save = () => {
     if (!form.name.trim() || !form.body.trim()) return toast.error("Name and body are required");
-    if (edit) { setItems((x) => x.map((t) => t.id === edit.id ? { ...edit, ...form } : t)); toast.success("Template updated"); }
+    if (edit) { setItems((x) => x.map((t) => t.id === edit.id ? { ...edit, ...form, updated: new Date().toISOString() } : t)); toast.success("Template updated"); }
     else { setItems((x) => [{ id: `t${Date.now()}`, updated: new Date().toISOString(), ...form }, ...x]); toast.success("Template created"); }
     setOpen(false);
   };

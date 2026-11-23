@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, ShieldCheck, Check } from "lucide-react";
 import { Logo } from "../../brand/Logo";
@@ -8,25 +8,97 @@ import { Field, Input, PasswordInput } from "../../components/ui/Field";
 import { useAuth } from "../../lib/auth.jsx";
 import { useToast } from "../../components/ui/Toast.jsx";
 
+// Mouse-driven parallax. The pointer sets a target; a rAF loop eases the
+// current value toward it, so movement glides and settles instead of
+// snapping. Values go straight onto CSS variables on the panel, so moving the
+// mouse never re-renders React:
+//   --mx / --my  smoothed offset from the centre, -1..1
+//   --px / --py  smoothed pointer position in px (for the spotlight)
+//   --lit        0..1, fades the spotlight in on enter and out on leave
+// Turned off when the OS asks for reduced motion.
+function usePointerParallax(ref, enabled) {
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !enabled) return;
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+
+    const target = { x: 0, y: 0, px: 0, py: 0, lit: 0 };
+    const cur = { ...target };
+    let raf = 0;
+    const EASE = 0.08;
+
+    const tick = () => {
+      let moving = false;
+      for (const k of Object.keys(cur)) {
+        const d = target[k] - cur[k];
+        if (Math.abs(d) > (k === "px" || k === "py" ? 0.1 : 0.0005)) { cur[k] += d * EASE; moving = true; }
+        else cur[k] = target[k];
+      }
+      el.style.setProperty("--mx", cur.x.toFixed(4));
+      el.style.setProperty("--my", cur.y.toFixed(4));
+      el.style.setProperty("--px", `${cur.px.toFixed(1)}px`);
+      el.style.setProperty("--py", `${cur.py.toFixed(1)}px`);
+      el.style.setProperty("--lit", cur.lit.toFixed(3));
+      raf = moving ? requestAnimationFrame(tick) : 0;
+    };
+    const kick = () => { if (!raf) raf = requestAnimationFrame(tick); };
+
+    const onMove = (e) => {
+      const r = el.getBoundingClientRect();
+      const px = e.clientX - r.left, py = e.clientY - r.top;
+      target.x = Math.max(-1, Math.min(1, (px / r.width) * 2 - 1));
+      target.y = Math.max(-1, Math.min(1, (py / r.height) * 2 - 1));
+      target.px = px; target.py = py; target.lit = 1;
+      // Start the spotlight where the pointer enters, not sliding in from a corner.
+      if (cur.lit < 0.01) { cur.px = px; cur.py = py; }
+      kick();
+    };
+    const onLeave = () => { target.x = 0; target.y = 0; target.lit = 0; kick(); };
+
+    el.addEventListener("pointermove", onMove);
+    el.addEventListener("pointerleave", onLeave);
+    return () => {
+      el.removeEventListener("pointermove", onMove);
+      el.removeEventListener("pointerleave", onLeave);
+      cancelAnimationFrame(raf);
+    };
+  }, [ref, enabled]);
+}
+
+const POINTS = ["Reliable carrier-grade delivery", "Bulk campaigns & automation", "Developer API and webhooks"];
+
 function AuthFrame({ title, subtitle, children, footer }) {
-  if (useEntrySplash()) return <BootSplash />;
+  // Hooks must run before the early splash return.
+  const splashing = useEntrySplash();
+  const panelRef = useRef(null);
+  usePointerParallax(panelRef, !splashing);
+  if (splashing) return <BootSplash />;
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
-      {/* Brand panel */}
-      <div className="relative hidden overflow-hidden bg-navy-900 p-12 text-white lg:flex lg:flex-col lg:justify-between">
-        <div className="pointer-events-none absolute inset-0 opacity-20"
-          style={{ backgroundImage: "radial-gradient(circle at 30% 20%, #5a86fb 0, transparent 45%), radial-gradient(circle at 80% 70%, #355ef2 0, transparent 40%)" }} />
-        <Link to="/" className="relative"><Logo markClass="text-white" invert /></Link>
-        <div className="relative">
-          <h2 className="text-3xl font-bold leading-tight">Connect. Communicate. Deliver.</h2>
-          <p className="mt-4 max-w-sm text-navy-200">The enterprise messaging platform for businesses, institutions and developers across Ghana.</p>
+      {/* Brand panel — layers shift with the mouse at different depths */}
+      <div ref={panelRef}
+        className="nb-parallax relative hidden overflow-hidden bg-navy-900 p-12 text-white lg:flex lg:flex-col lg:justify-between">
+        {/* deep layer: drifting glows, moving furthest */}
+        <div className="pointer-events-none absolute inset-0 opacity-25" aria-hidden="true">
+          <span className="nb-layer nb-depth-far"><span className="nb-orb nb-orb-a" /></span>
+          <span className="nb-layer nb-depth-mid"><span className="nb-orb nb-orb-b" /></span>
+        </div>
+        {/* soft light that follows the pointer */}
+        <div className="nb-spotlight pointer-events-none absolute inset-0" aria-hidden="true" />
+        <Link to="/" className="nb-rise relative w-fit" style={{ animationDelay: "60ms" }}><Logo markClass="text-white" invert /></Link>
+        {/* near layer: content leans gently, opposite the glows */}
+        <div className="nb-depth-near relative">
+          <h2 className="nb-rise text-3xl font-bold leading-tight" style={{ animationDelay: "160ms" }}>Connect. Communicate. Deliver.</h2>
+          <p className="nb-rise mt-4 max-w-sm text-navy-200" style={{ animationDelay: "260ms" }}>The enterprise messaging platform for businesses, institutions and developers across Ghana.</p>
           <ul className="mt-8 space-y-3">
-            {["Reliable carrier-grade delivery", "Bulk campaigns & automation", "Developer API and webhooks"].map((x) => (
-              <li key={x} className="flex items-center gap-2 text-sm text-navy-100"><Check size={16} className="text-brand-300" /> {x}</li>
+            {POINTS.map((x, i) => (
+              <li key={x} className="nb-rise flex items-center gap-2 text-sm text-navy-100" style={{ animationDelay: `${380 + i * 90}ms` }}>
+                <Check size={16} className="text-brand-300" /> {x}
+              </li>
             ))}
           </ul>
         </div>
-        <p className="relative text-xs text-navy-300">Copyright &copy; 2026 Nexbridge Technology.</p>
+        <p className="nb-rise relative text-xs text-navy-300" style={{ animationDelay: "700ms" }}>Copyright &copy; 2026 Nexbridge Technology.</p>
       </div>
       {/* Form */}
       <div className="flex items-center justify-center bg-surface-muted px-5 py-12">

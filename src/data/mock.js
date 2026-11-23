@@ -46,9 +46,10 @@ const body = () => pick(MSG_BODIES).replace("{name}", pick(FIRST)).replace(/\{n\
 
 export const MESSAGES = Array.from({ length: 46 }, (_, i) => {
   const st = pick(["delivered", "delivered", "delivered", "delivered", "pending", "failed"]);
+  const segments = int(1, 3);
   return {
     id: `m${i + 1}`, recipient: phone(), sender: pick(["HORIZON", "HRZ-OTP", "HRZ-PROMO"]),
-    content: body(), status: st, segments: int(1, 3), cost: int(1, 3),
+    content: body(), status: st, segments, cost: segments, // 1 credit per segment
     date: minsAgo(int(2, 60 * 24 * 9)),
   };
 });
@@ -58,7 +59,9 @@ export const CAMPAIGNS = Array.from({ length: 22 }, (_, i) => {
   const status = pick(["completed", "completed", "completed", "scheduled", "draft", "processing", "cancelled"]);
   const deliveredPct = status === "completed" ? int(92, 99) : status === "processing" ? int(40, 70) : 0;
   const delivered = Math.round((recips * deliveredPct) / 100);
-  const failed = status === "completed" || status === "processing" ? Math.round((recips * int(1, 6)) / 100) : 0;
+  // Failed share can never push delivered + failed past 100% of recipients.
+  const failPct = status === "completed" || status === "processing" ? Math.min(int(1, 6), 100 - deliveredPct) : 0;
+  const failed = Math.round((recips * failPct) / 100);
   const nm = pick(["November Promo", "OTP Service", "Payday Sale", "Loyalty Rewards", "Back to School", "Weekend Flash", "Service Notice", "Eid Greetings", "Customer Survey", "Restock Alert"]);
   return {
     id: `c${i + 1}`, name: `${nm} 2026`, sender: pick(["HRZ-PROMO", "HORIZON", "HRZ-OTP"]),

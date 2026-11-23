@@ -33,15 +33,18 @@ export function AuthProvider({ children }) {
 
 
   const login = ({ email, role = "customer" }) => {
-    const nm = email ? email.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "Kwame Mensah";
+    const nm = email ? email.split("@")[0].replace(/[._-]+/g, " ").trim().replace(/\b\w/g, (c) => c.toUpperCase()) : "";
+    const name = role === "admin" ? "System Administrator" : nm || "Kwame Mensah";
     setUser({
       email: email || "kwame.mensah@horizonretail.gh",
-      name: role === "admin" ? "System Administrator" : nm || "Kwame Mensah",
+      name,
       role,
-      initials: (nm || "KM").split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase(),
+      // Initials come from the displayed name so they always match it.
+      initials: name.split(/\s+/).filter(Boolean).map((w) => w[0]).slice(0, 2).join("").toUpperCase(),
     });
   };
   const logout = () => setUser(null);
+  const updateUser = (patch) => setUser((u) => (u ? { ...u, ...patch } : u));
 
-  return <AuthCtx.Provider value={{ user, login, logout }}>{children}</AuthCtx.Provider>;
+  return <AuthCtx.Provider value={{ user, login, logout, updateUser }}>{children}</AuthCtx.Provider>;
 }

@@ -119,6 +119,13 @@ export function ImportContacts() {
   const [file, setFile] = useState(null);
   const [group, setGroup] = useState(GROUPS[0].name);
   const [done, setDone] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  const pickFile = (f) => {
+    if (!f) return;
+    if (!/\.(csv|xls|xlsx)$/i.test(f.name)) return toast.error("Upload a CSV, XLS or XLSX file");
+    if (f.size > 10 * 1024 * 1024) return toast.error("File is larger than 10MB");
+    setFile(f); setDone(false);
+  };
   return (
     <>
       <PageHeader title="Import Contacts" subtitle="Bring contacts in from a CSV or Excel file." />
@@ -129,11 +136,15 @@ export function ImportContacts() {
               <Field label="Target group"><Select value={group} onChange={(e) => setGroup(e.target.value)}>{GROUPS.map((g) => <option key={g.id}>{g.name}</option>)}</Select></Field>
               <div>
                 <label className="nb-label">Upload file</label>
-                <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#e0d8cf] bg-surface-muted/50 px-6 py-12 text-center hover:border-brand-400 hover:bg-brand-50/30">
+                <label
+                  onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+                  onDragLeave={() => setDragging(false)}
+                  onDrop={(e) => { e.preventDefault(); setDragging(false); pickFile(e.dataTransfer.files?.[0]); }}
+                  className={`flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-12 text-center hover:border-brand-400 hover:bg-brand-50/30 ${dragging ? "border-brand-400 bg-brand-50/40" : "border-[#e0d8cf] bg-surface-muted/50"}`}>
                   <Upload size={28} className="text-navy-500" />
                   <p className="mt-3 text-sm font-medium text-navy-800">{file ? file.name : "Click to upload or drag & drop"}</p>
                   <p className="mt-1 text-xs text-navy-500">CSV, XLS or XLSX up to 10MB</p>
-                  <input type="file" accept=".csv,.xls,.xlsx" className="hidden" onChange={(e) => { setFile(e.target.files[0]); setDone(false); }} />
+                  <input type="file" accept=".csv,.xls,.xlsx" className="hidden" onChange={(e) => { pickFile(e.target.files?.[0]); e.target.value = ""; }} />
                 </label>
               </div>
               <div className="flex justify-end gap-2">

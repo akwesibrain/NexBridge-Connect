@@ -86,3 +86,42 @@ h1, h2, h3, .font-display { font-family: "Baloo 2", "Hanken Grotesk", sans-serif
   .nb-roll b { animation: none !important; }
   .nb-draw { stroke-dashoffset: 0 !important; animation: none !important; }
 }
+
+/* Auth brand panel: staggered entrance + slow ambient drift */
+@keyframes nb-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.nb-rise { opacity: 0; animation: nb-rise .75s cubic-bezier(.22, 1, .36, 1) forwards; }
+
+@keyframes nb-drift-a {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(9%, 7%, 0) scale(1.12); }
+}
+@keyframes nb-drift-b {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(-8%, -9%, 0) scale(1.1); }
+}
+.nb-orb { position: absolute; aspect-ratio: 1; border-radius: 9999px; will-change: transform; }
+.nb-orb-a { left: -18%; top: -22%; width: 85%;
+  background: radial-gradient(circle, #5a86fb 0, transparent 58%);
+  animation: nb-drift-a 18s ease-in-out infinite; }
+.nb-orb-b { right: -25%; bottom: -28%; width: 80%;
+  background: radial-gradient(circle, #355ef2 0, transparent 55%);
+  animation: nb-drift-b 23s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .nb-rise { opacity: 1; animation: none; }
+}
+
+/* Mouse parallax (values eased in JS, see usePointerParallax) */
+.nb-parallax { --mx: 0; --my: 0; --px: 50%; --py: 50%; --lit: 0; }
+.nb-layer { position: absolute; inset: 0; will-change: transform; }
+.nb-depth-far { transform: translate3d(calc(var(--mx) * 46px), calc(var(--my) * 34px), 0); }
+.nb-depth-mid { transform: translate3d(calc(var(--mx) * -30px), calc(var(--my) * -24px), 0); }
+.nb-depth-near { transform: translate3d(calc(var(--mx) * -8px), calc(var(--my) * -6px), 0); will-change: transform; }
+.nb-spotlight {
+  opacity: calc(var(--lit) * 0.9);
+  background: radial-gradient(420px circle at var(--px) var(--py), rgba(255, 173, 140, .10), rgba(90, 134, 251, .06) 40%, transparent 70%);
+}
+@media (prefers-reduced-motion: reduce) {
+  .nb-depth-far, .nb-depth-mid, .nb-depth-near { transform: none; }
+  .nb-spotlight { display: none; }
+}

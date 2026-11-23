@@ -10,7 +10,7 @@ import DeltaFlow from "../../components/DeltaFlow";
 import Button from "../../components/ui/Button";
 import { cn } from "../../lib/cn";
 import { PACKAGES } from "../../data/mock";
-import { fmtGhs, fmtInt } from "../../lib/format";
+import { fmtGhs, fmtRate, fmtInt } from "../../lib/format";
 
 function TopBar() {
   return (
@@ -89,7 +89,7 @@ function ComposePanel() {
         <div>
           <p className="mb-1 text-[11px] font-medium text-navy-700">Message</p>
           <div className="rounded-lg border border-[#e7ddd1] p-3 text-sm text-navy-800">Your order #HR-4471 has shipped and arrives in 2-3 days.</div>
-          <p className="mt-1 text-[11px] text-navy-500">58 chars · 1 segment · GSM-7</p>
+          <p className="mt-1 text-[11px] text-navy-500">56 chars · 1 segment · GSM-7</p>
         </div>
         <div className="flex items-center justify-between pt-1">
           <span className="text-[11px] text-navy-500">18,420 recipients</span>
@@ -141,7 +141,7 @@ const METRICS = [
   ["3", "networks, one API", "MTN, Telecel and AirtelTigo"],
   ["94%+", "average delivery", "measured across all routes"],
   ["1–3 days", "sender ID approval", "with status you can track"],
-  [fmtGhs(PACKAGES[0].perSms), "per SMS", "pay only for what you send"],
+  [fmtRate(PACKAGES[0].perSms), "per SMS", "pay only for what you send"],
 ];
 
 function FeatureRow({ eyebrow, title, text, points, visual, reverse }) {
@@ -365,7 +365,7 @@ export function PublicPricing() {
               {p.popular && <span className="absolute -top-3 left-6 rounded-full bg-brand-600 px-3 py-1 text-xs font-semibold text-white">Most popular</span>}
               <h3 className="text-lg font-bold text-navy-900">{p.name}</h3>
               <p className="mt-2 font-display text-3xl font-extrabold text-navy-900">{fmtGhs(p.price)}</p>
-              <p className="mt-1 text-sm text-navy-600">{fmtInt(p.units)} SMS &middot; {fmtGhs(p.perSms)}/SMS</p>
+              <p className="mt-1 text-sm text-navy-600">{fmtInt(p.units)} SMS &middot; {fmtRate(p.perSms)}/SMS</p>
               <ul className="mt-5 space-y-2.5">
                 {p.features.map((f) => <li key={f} className="flex items-start gap-2 text-sm text-navy-700"><Check size={16} className="mt-0.5 shrink-0 text-emerald-600" /> {f}</li>)}
               </ul>

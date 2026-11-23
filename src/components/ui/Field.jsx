@@ -34,7 +34,7 @@ export function Select({ className, children, ...p }) {
 }
 export function Toggle({ checked, onChange, label }) {
   return (
-    <button type="button" onClick={() => onChange(!checked)}
+    <button type="button" role="switch" aria-checked={!!checked} onClick={() => onChange(!checked)}
       className={cn("inline-flex h-6 w-11 items-center rounded-full transition", checked ? "bg-brand-600" : "bg-navy-200")}>
       <span className={cn("ml-0.5 h-5 w-5 rounded-full bg-white shadow transition", checked && "translate-x-5")} />
       {label && <span className="sr-only">{label}</span>}

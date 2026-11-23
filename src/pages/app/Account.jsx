@@ -12,6 +12,7 @@ import Modal from "../../components/ui/Modal";
 import DataTable from "../../components/ui/DataTable";
 import { useToast } from "../../components/ui/Toast.jsx";
 import { relTime } from "../../lib/format";
+import { useAuth } from "../../lib/auth.jsx";
 import { ORG, TEAM } from "../../data/mock";
 
 function SectionSave({ onSave }) {
@@ -20,14 +21,22 @@ function SectionSave({ onSave }) {
 
 export function Profile() {
   const toast = useToast();
-  const [form, setForm] = useState({ name: ORG.user.name, email: ORG.user.email, phone: "+233 20 123 4567", role: ORG.user.role });
+  const { user, updateUser } = useAuth();
+  const [form, setForm] = useState({ name: user?.name || ORG.user.name, email: user?.email || ORG.user.email, phone: "+233 20 123 4567", role: ORG.user.role });
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  const initials = form.name.split(/\s+/).filter(Boolean).map((w) => w[0]).slice(0, 2).join("").toUpperCase() || "?";
+  const save = () => {
+    if (!form.name.trim()) return toast.error("Name is required");
+    if (!/^\S+@\S+\.\S+$/.test(form.email)) return toast.error("Enter a valid email");
+    updateUser({ name: form.name.trim(), email: form.email.trim(), initials });
+    toast.success("Profile updated");
+  };
   return (
     <>
       <PageHeader title="Profile" subtitle="Manage your personal account details." />
       <div className="grid gap-5 lg:grid-cols-3">
         <Card className="h-fit p-6 text-center lg:col-span-1">
-          <span className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-navy-800 text-2xl font-bold text-white">{ORG.user.initials}</span>
+          <span className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-navy-800 text-2xl font-bold text-white">{initials}</span>
           <h3 className="mt-4 text-base font-semibold text-navy-900">{form.name}</h3>
           <p className="text-sm text-navy-600">{form.role}</p>
           <Badge tone="green" className="mt-3">Verified</Badge>
@@ -41,7 +50,7 @@ export function Profile() {
             <Field label="Email"><Input type="email" value={form.email} onChange={set("email")} /></Field>
             <Field label="Phone"><Input value={form.phone} onChange={set("phone")} /></Field>
           </CardBody>
-          <SectionSave onSave={() => toast.success("Profile updated")} />
+          <SectionSave onSave={save} />
         </Card>
       </div>
     </>
@@ -88,6 +97,7 @@ export function Team() {
   const [form, setForm] = useState({ email: "", role: "Campaign Manager" });
   const invite = () => {
     if (!/^\S+@\S+\.\S+$/.test(form.email)) return toast.error("Enter a valid email");
+    if (team.some((m) => m.email.toLowerCase() === form.email.trim().toLowerCase())) return toast.error("That person is already on the team");
     setTeam((t) => [...t, { id: `tm${Date.now()}`, name: form.email.split("@")[0], email: form.email, role: form.role, status: "invited", lastActive: null }]);
     toast.success("Invitation sent (demo)"); setOpen(false); setForm({ email: "", role: "Campaign Manager" });
   };
@@ -101,7 +111,9 @@ export function Team() {
     { key: "role", header: "Role", render: (r) => <Badge tone="navy">{r.role}</Badge> },
     { key: "status", header: "Status", render: (r) => <Badge status={r.status === "invited" ? "pending" : "active"}>{r.status}</Badge> },
     { key: "lastActive", header: "Last active", render: (r) => r.lastActive ? relTime(r.lastActive) : "Never" },
-    { key: "id", header: "", sortable: false, align: "right", render: (r) => <Button size="sm" variant="ghost" aria-label="Remove member" icon={Trash2} onClick={() => { setTeam((t) => t.filter((x) => x.id !== r.id)); toast.success("Member removed"); }} /> },
+    { key: "id", header: "", sortable: false, align: "right", render: (r) => r.role === "Account Owner"
+      ? <span className="text-xs text-navy-500">Owner</span>
+      : <Button size="sm" variant="ghost" aria-label="Remove member" icon={Trash2} onClick={() => { setTeam((t) => t.filter((x) => x.id !== r.id)); toast.success("Member removed"); }} /> },
   ];
   return (
     <>
@@ -169,11 +181,21 @@ export function Notifications() {
 export function Security() {
   const toast = useToast();
   const [twoFA, setTwoFA] = useState(true);
-  const sessions = [
+  const [pw, setPw] = useState({ current: "", next: "", confirm: "" });
+  const setP = (k) => (e) => setPw((p) => ({ ...p, [k]: e.target.value }));
+  const updatePassword = () => {
+    if (!pw.current) return toast.error("Enter your current password");
+    if (pw.next.length < 8 || !/\d/.test(pw.next) || !/[^A-Za-z0-9]/.test(pw.next)) return toast.error("New password needs 8+ characters with a number and a symbol");
+    if (pw.next !== pw.confirm) return toast.error("New passwords don't match");
+    if (pw.next === pw.current) return toast.error("New password must differ from the current one");
+    setPw({ current: "", next: "", confirm: "" });
+    toast.success("Password updated (demo)");
+  };
+  const [sessions, setSessions] = useState([
     { id: 1, device: "Chrome on Windows", loc: "Accra, Ghana", current: true, time: "Active now" },
     { id: 2, device: "Safari on iPhone", loc: "Accra, Ghana", current: false, time: "2 hours ago" },
     { id: 3, device: "Firefox on macOS", loc: "Kumasi, Ghana", current: false, time: "3 days ago" },
-  ];
+  ]);
   return (
     <>
       <PageHeader title="Security Settings" subtitle="Protect your account and manage active sessions." />
@@ -181,10 +203,10 @@ export function Security() {
         <Card>
           <CardHeader title="Change password" />
           <CardBody className="space-y-4">
-            <Field label="Current password"><PasswordInput /></Field>
-            <Field label="New password" hint="At least 8 characters with a number and symbol."><PasswordInput /></Field>
-            <Field label="Confirm new password"><PasswordInput /></Field>
-            <Button icon={KeyRound} onClick={() => toast.success("Password updated (demo)")}>Update password</Button>
+            <Field label="Current password"><PasswordInput value={pw.current} onChange={setP("current")} autoComplete="current-password" /></Field>
+            <Field label="New password" hint="At least 8 characters with a number and symbol."><PasswordInput value={pw.next} onChange={setP("next")} autoComplete="new-password" /></Field>
+            <Field label="Confirm new password" error={pw.confirm && pw.confirm !== pw.next ? "Passwords don't match" : undefined}><PasswordInput value={pw.confirm} onChange={setP("confirm")} autoComplete="new-password" /></Field>
+            <Button icon={KeyRound} onClick={updatePassword}>Update password</Button>
           </CardBody>
         </Card>
         <Card className="h-fit">
@@ -200,7 +222,7 @@ export function Security() {
           </CardBody>
         </Card>
         <Card className="lg:col-span-2">
-          <CardHeader title="Active sessions" action={<Button size="sm" variant="outline" icon={LogOut} onClick={() => toast.success("Signed out other sessions (demo)")}>Sign out all others</Button>} />
+          <CardHeader title="Active sessions" action={<Button size="sm" variant="outline" icon={LogOut} disabled={sessions.length <= 1} onClick={() => { setSessions((s) => s.filter((x) => x.current)); toast.success("Signed out other sessions"); }}>Sign out all others</Button>} />
           <div className="divide-y divide-[#f6f1ea]">
             {sessions.map((s) => (
               <div key={s.id} className="flex items-center justify-between px-5 py-3.5">
@@ -208,7 +230,7 @@ export function Security() {
                   <span className="grid h-10 w-10 place-items-center rounded-lg bg-surface-sunken text-navy-600"><Monitor size={18} /></span>
                   <div><p className="text-sm font-medium text-navy-900">{s.device} {s.current && <Badge tone="green" className="ml-1">This device</Badge>}</p><p className="text-xs text-navy-600">{s.loc} &middot; {s.time}</p></div>
                 </div>
-                {!s.current && <Button size="sm" variant="ghost" onClick={() => toast.success("Session revoked (demo)")}>Revoke</Button>}
+                {!s.current && <Button size="sm" variant="ghost" onClick={() => { setSessions((x) => x.filter((y) => y.id !== s.id)); toast.success("Session revoked"); }}>Revoke</Button>}
               </div>
             ))}
           </div>

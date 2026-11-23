@@ -9,16 +9,18 @@ const CUSTOMER = {
   greeting: "Hi! I'm the Nexbridge assistant. I can help you send messages, check delivery, manage contacts, buy credits and more. What do you need?",
   suggestions: ["How do I send an SMS?", "Check delivery rate", "Buy more credits", "Register a sender ID"],
   intents: [
-    { k: ["bulk", "campaign", "many", "mass"], t: "For a campaign to many people, use Bulk SMS: pick contact groups, write your message with {variables}, preview the cost, then send or schedule it.", a: { label: "Open Bulk SMS", to: "/app/bulk-sms" } },
-    { k: ["send", "sms", "message", "compose", "text"], t: "To send a quick message, open Quick SMS, choose a sender ID, add recipients and type your message. You'll see the segment count and credit cost before you send.", a: { label: "Open Quick SMS", to: "/app/quick-sms" } },
-    { k: ["deliver", "report", "status", "arrived", "failed", "rate"], t: "Delivery Reports show delivered, failed and in-transit rates by sender ID and campaign. You can export them or have them emailed.", a: { label: "Open Delivery Reports", to: "/app/reports" } },
-    { k: ["credit", "buy", "top up", "topup", "wallet", "balance", "recharge"], t: "Your credit balance lives in the SMS Wallet. To add more, open Buy Credits and pick a package that matches your volume.", a: { label: "Buy credits", to: "/app/buy-credits" } },
+    // Order matters: the first matching intent wins, so specific topics
+    // ("sender", "schedule", "template") come before the generic "send/sms".
     { k: ["sender", "sender id", "brand name", "from name"], t: "Sender IDs are the branded names your messages come from. Register one from the Sender IDs page; approval usually takes 1 to 3 business days.", a: { label: "Open Sender IDs", to: "/app/senders" } },
-    { k: ["contact", "import", "group", "csv", "excel", "audience"], t: "Manage people in Contacts. You can import from CSV or Excel and sort them into groups so you can target the right audience.", a: { label: "Open Contacts", to: "/app/contacts" } },
-    { k: ["api", "develop", "key", "webhook", "integrat", "rest"], t: "Developers can send through our REST API. Create an API key, read the docs and set up delivery webhooks in the Developer Center.", a: { label: "Developer Center", to: "/app/developers" } },
-    { k: ["price", "pricing", "cost", "how much", "rate per"], t: "Credits are prepaid. You can see the packages and the per-SMS rate on the Pricing page.", a: { label: "See pricing", to: "/app/pricing" } },
     { k: ["schedule", "later", "queue", "timing"], t: "You can schedule a campaign for a later time inside Bulk SMS, and manage queued ones under Scheduled.", a: { label: "Open Scheduled", to: "/app/scheduled" } },
     { k: ["template"], t: "Save reusable message content as Templates, with {variables} for personalization, then drop them into Quick or Bulk SMS.", a: { label: "Open Templates", to: "/app/templates" } },
+    { k: ["deliver", "report", "status", "arrived", "failed"], t: "Delivery Reports show delivered, failed and in-transit rates by sender ID and campaign. You can export them or have them emailed.", a: { label: "Open Delivery Reports", to: "/app/reports" } },
+    { k: ["price", "pricing", "cost", "how much", "rate per"], t: "Credits are prepaid. You can see the packages and the per-SMS rate on the Pricing page.", a: { label: "See pricing", to: "/app/pricing" } },
+    { k: ["credit", "buy", "top up", "topup", "wallet", "balance", "recharge"], t: "Your credit balance lives in the SMS Wallet. To add more, open Buy Credits and pick a package that matches your volume.", a: { label: "Buy credits", to: "/app/buy-credits" } },
+    { k: ["bulk", "campaign", "many", "mass"], t: "For a campaign to many people, use Bulk SMS: pick contact groups, write your message with {variables}, preview the cost, then send or schedule it.", a: { label: "Open Bulk SMS", to: "/app/bulk-sms" } },
+    { k: ["contact", "import", "group", "csv", "excel", "audience"], t: "Manage people in Contacts. You can import from CSV or Excel and sort them into groups so you can target the right audience.", a: { label: "Open Contacts", to: "/app/contacts" } },
+    { k: ["api", "develop", "key", "webhook", "integrat", "rest api"], t: "Developers can send through our REST API. Create an API key, read the docs and set up delivery webhooks in the Developer Center.", a: { label: "Developer Center", to: "/app/developers" } },
+    { k: ["send", "sms", "message", "compose", "text"], t: "To send a quick message, open Quick SMS, choose a sender ID, add recipients and type your message. You'll see the segment count and credit cost before you send.", a: { label: "Open Quick SMS", to: "/app/quick-sms" } },
   ],
   fallback: "I can help with sending SMS, campaigns, delivery reports, contacts, sender IDs, credits and the API. Try asking about one of those.",
 };

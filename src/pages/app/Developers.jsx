@@ -89,13 +89,17 @@ export function ApiKeys() {
   const [revoke, setRevoke] = useState(null);
   const [reveal, setReveal] = useState(false);
   const [name, setName] = useState("");
+  const [scope, setScope] = useState("Full access");
   const [created, setCreated] = useState(null);
 
   const create = () => {
     if (!name.trim()) return toast.error("Give the key a name");
-    const secret = `nxb_live_${Math.random().toString(36).slice(2)}${Math.random().toString(36).slice(2)}`.slice(0, 36);
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    const secret = `nxb_live_${Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("")}`;
     setCreated(secret);
-    setKeys((k) => [{ id: `k${Date.now()}`, name, prefix: "nxb_live_", masked: `nxb_live_••••••••••••${secret.slice(-4)}`, status: "active", created: new Date().toISOString(), lastUsed: null, scope: "Full access" }, ...k]);
+    setReveal(false);
+    setKeys((k) => [{ id: `k${Date.now()}`, name: name.trim(), prefix: "nxb_live_", masked: `nxb_live_••••••••••••${secret.slice(-4)}`, status: "active", created: new Date().toISOString(), lastUsed: null, scope }, ...k]);
     toast.success("API key created");
   };
   const columns = [
@@ -111,7 +115,7 @@ export function ApiKeys() {
   return (
     <>
       <PageHeader title="API Keys" subtitle="Authenticate API requests with secret keys."
-        actions={<Button icon={Plus} onClick={() => { setOpen(true); setName(""); setCreated(null); }}>Create key</Button>} />
+        actions={<Button icon={Plus} onClick={() => { setOpen(true); setName(""); setScope("Full access"); setCreated(null); setReveal(false); }}>Create key</Button>} />
       {DEMO_NOTE}
       <DataTable columns={columns} rows={keys} searchable={false} emptyIcon={KeyRound} />
 
@@ -131,7 +135,7 @@ export function ApiKeys() {
         ) : (
           <div className="space-y-4">
             <Field label="Key name" required><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Production server" /></Field>
-            <Field label="Scope"><Select><option>Full access</option><option>Send + read</option><option>Send only</option><option>Read only</option></Select></Field>
+            <Field label="Scope"><Select value={scope} onChange={(e) => setScope(e.target.value)}><option>Full access</option><option>Send + read</option><option>Send only</option><option>Read only</option></Select></Field>
           </div>
         )}
       </Modal>
@@ -348,8 +352,11 @@ export function Webhooks() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ event: "message.delivered", url: "" });
   const add = () => {
-    if (!/^https?:\/\//.test(form.url)) return toast.error("Enter a valid HTTPS URL");
-    setHooks((h) => [{ id: `w${Date.now()}`, status: "active", lastDelivery: null, ...form }, ...h]);
+    let ok = false;
+    try { const u = new URL(form.url.trim()); ok = u.protocol === "https:" && !!u.hostname; } catch { /* invalid */ }
+    if (!ok) return toast.error("Enter a valid HTTPS URL");
+    if (hooks.some((h) => h.event === form.event && h.url === form.url.trim())) return toast.error("That webhook already exists");
+    setHooks((h) => [{ id: `w${Date.now()}`, status: "active", lastDelivery: null, event: form.event, url: form.url.trim() }, ...h]);
     toast.success("Webhook added"); setOpen(false); setForm({ event: "message.delivered", url: "" });
   };
   return (

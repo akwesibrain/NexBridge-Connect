@@ -15,7 +15,7 @@ import Modal from "../../components/ui/Modal";
 import { Field, Input, Select } from "../../components/ui/Field";
 import { useToast } from "../../components/ui/Toast.jsx";
 import { AreaTrend } from "../../components/charts/Charts";
-import { fmtInt, fmtGhs, fmtDate } from "../../lib/format";
+import { fmtInt, fmtGhs, fmtRate, fmtDate } from "../../lib/format";
 import Skeleton from "../../components/ui/Skeleton";
 import { useMockLoad } from "../../lib/useMockLoad";
 import { ORG, PACKAGES, TRANSACTIONS, VOLUME_MONTHLY, COLORS } from "../../data/mock";
@@ -56,7 +56,7 @@ export function Wallet() {
             )) : (<>
               <StatCard label="Spent this month" value={fmtGhs(4260)} icon={TrendingDown} tone="red" />
               <StatCard label="Credits used" value="182,400" icon={TrendingUp} tone="brand" />
-              <StatCard label="Avg. cost / SMS" value={fmtGhs(0.023)} icon={Tag} tone="navy" />
+              <StatCard label="Avg. cost / SMS" value={fmtRate(0.023)} icon={Tag} tone="navy" />
             </>)}
           </div>
           <Card>
@@ -97,7 +97,7 @@ export function BuyCredits() {
                   <span className={`grid h-5 w-5 place-items-center rounded-full border ${selected === p.name ? "border-brand-600 bg-brand-600" : "border-[#e0d8cf]"}`}>{selected === p.name && <Check size={13} className="text-white" />}</span>
                 </div>
                 <p className="mt-2 text-2xl font-extrabold text-navy-900">{fmtGhs(p.price)}</p>
-                <p className="text-sm text-navy-600">{fmtInt(p.units)} credits &middot; {fmtGhs(p.perSms)}/SMS</p>
+                <p className="text-sm text-navy-600">{fmtInt(p.units)} credits &middot; {fmtRate(p.perSms)}/SMS</p>
               </button>
             ))}
           </div>
@@ -183,7 +183,7 @@ export function Pricing() {
             {p.popular && <Badge tone="blue" className="mb-2">Most popular</Badge>}
             <h3 className="text-lg font-bold text-navy-900">{p.name}</h3>
             <p className="mt-2 text-3xl font-extrabold text-navy-900">{fmtGhs(p.price)}</p>
-            <p className="mt-1 text-sm text-navy-600">{fmtInt(p.units)} SMS &middot; {fmtGhs(p.perSms)}/SMS</p>
+            <p className="mt-1 text-sm text-navy-600">{fmtInt(p.units)} SMS &middot; {fmtRate(p.perSms)}/SMS</p>
             <ul className="mt-4 space-y-2">{p.features.map((f) => <li key={f} className="flex items-start gap-2 text-sm text-navy-700"><Check size={15} className="mt-0.5 shrink-0 text-emerald-600" /> {f}</li>)}</ul>
             <Button as={Link} to="/app/buy-credits" className="mt-5 w-full" variant={p.popular ? "primary" : "outline"}>Buy {p.name}</Button>
           </Card>

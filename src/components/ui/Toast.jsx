@@ -16,7 +16,7 @@ export function ToastProvider({ children }) {
   return (
     <ToastCtx.Provider value={api}>
       {children}
-      <div className="fixed bottom-5 right-5 z-[60] flex w-80 flex-col gap-2">
+      <div className="fixed bottom-24 right-5 z-[60] flex w-80 max-w-[calc(100vw-2.5rem)] flex-col gap-2">
         {items.map((t) => {
           const Icon = icons[t.type];
           return (
